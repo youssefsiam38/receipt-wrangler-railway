@@ -1,0 +1,70 @@
+# Local test topology. Mirrors the Railway service graph:
+#   postgres        -> Railway PostgreSQL service (own volume)
+#   redis           -> Railway Redis service
+#   receipt-wrangler-> Railway "receipt-wrangler" service (public, volume at the receipt data dir)
+name: receipt-wrangler-railway-test
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: wrangler
+      POSTGRES_PASSWORD: local-test-only-db-password
+      POSTGRES_DB: wrangler
+      PGDATA: /var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U wrangler -d wrangler']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--requirepass', 'local-test-only-redis-password']
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', 'local-test-only-redis-password', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  receipt-wrangler:
+    # Built from this repository. CI and the Railway template use the published GHCR image instead.
+    build:
+      context: .
+      args:
+        WRAPPER_VERSION: ${WRAPPER_VERSION:-0.0.0-local}
+        VCS_REF: ${VCS_REF:-local}
+    image: ${RECEIPT_WRANGLER_RAILWAY_IMAGE:-receipt-wrangler-railway:local}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ENCRYPTION_KEY: local-test-only-encryption-key-not-for-production
+      SECRET_KEY: local-test-only-secret-key-not-for-production
+      DB_ENGINE: postgresql
+      DB_HOST: postgres
+      DB_PORT: '5432'
+      DB_USER: wrangler
+      DB_PASSWORD: local-test-only-db-password
+      DB_NAME: wrangler
+      REDIS_HOST: redis
+      REDIS_PORT: '6379'
+      REDIS_PASSWORD: local-test-only-redis-password
+      RW_ADMIN_USERNAME: admin
+      RW_ADMIN_PASSWORD: local-test-only-admin-password
+      APP_READY_TIMEOUT: ${APP_READY_TIMEOUT:-300}
+    ports:
+      - '127.0.0.1:9082:80'
+    volumes:
+      - data:/app/receipt-wrangler-api/data
+
+volumes:
+  pgdata:
+  data:
