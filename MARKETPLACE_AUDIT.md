@@ -45,3 +45,4 @@ Proceeding with Receipt Wrangler.
 
 | Timestamp (UTC) | Queries | Result |
 |---|---|---|
+| 2026-09-11T22:48:51Z | `receipt wrangler`, `receipt-wrangler`, `receipt scanner`, `receipt ocr`, `expense receipts`, `reimbursement`, `receipts` | No exact or alias match; only the adjacent templates listed above (SplitPro, Homebox, notal). **Gap still clean; published immediately after this check.** |

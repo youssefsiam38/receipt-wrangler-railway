@@ -38,6 +38,14 @@ obligation for your changes too.
 | Image size | ~8.2 GB uncompressed (`linux/amd64`) — the single biggest operational consideration on Railway |
 | Checksums | Upstream publishes no separate checksum files; the OCI digests above are the integrity anchor, read with `docker buildx imagetools inspect`. |
 
+## Wrapper image releases
+
+| Wrapper tag | Index digest | Notes |
+|---|---|---|
+| `ghcr.io/youssefsiam38/receipt-wrangler-railway:1.0.5` | `sha256:8aa4dfed66d2566aaa05b1ab06bc135ae5c030b66b8e3c5aa0a3a5edba649153` | current; amd64 `sha256:e684a94ec60418ef0c50f9532385fd9b6217cafd78e6943a1a8c7eb7ea14fd1f`, arm64 `sha256:428edadd238e518d5ae18ac186def2f56a6fe80f982400a4f91600f03f28bf91` |
+| 1.0.0, 1.0.2 | not published | publish workflow failed on flaky test reads before any image was pushed; tags kept, never reused |
+| 1.0.1, 1.0.3, 1.0.4 | published, superseded | see releases |
+
 ## Runtime facts (verified by running the pinned image)
 
 | Item | Value |

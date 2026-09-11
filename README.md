@@ -9,7 +9,9 @@ per-group permissions, custom fields, email ingestion and exports. This reposito
 with the Receipt Wrangler project**.
 
 <!-- DEPLOY_BUTTON_START -->
-_Deploy button will appear here after the template is published._
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/receipt-wrangler)
+
+Template page: https://railway.com/deploy/receipt-wrangler
 <!-- DEPLOY_BUTTON_END -->
 
 > **Licence.** Receipt Wrangler is **AGPL-3.0**. This template deploys the upstream release
@@ -29,7 +31,7 @@ _Deploy button will appear here after the template is published._
 | Component | Version |
 |---|---|
 | Receipt Wrangler | v7.1.0 |
-| Wrapper | see [releases](https://github.com/youssefsiam38/receipt-wrangler-railway/releases) |
+| Wrapper | v1.0.5 — `ghcr.io/youssefsiam38/receipt-wrangler-railway:1.0.5` ([releases](https://github.com/youssefsiam38/receipt-wrangler-railway/releases)) |
 
 Why a wrapper and why these three services: [ARCHITECTURE.md](ARCHITECTURE.md). In one sentence:
 Receipt Wrangler creates a default `admin`/`admin` account on first start, and the wrapper replaces
