@@ -19,6 +19,11 @@ ARG BUILD_DATE=1970-01-01T00:00:00Z
 RUN apt-get update && apt-get install -y --no-install-recommends jq \
     && rm -rf /var/lib/apt/lists/*
 
+# Upstream's server block listens on IPv4 only; add an IPv6 listener for platforms that reach
+# containers over IPv6. Both listeners proxy to the same API on localhost:8081.
+COPY scripts/nginx-dual-stack.conf /etc/nginx/conf.d/zz-dual-stack.conf
+RUN nginx -t
+
 COPY licenses/ /usr/share/licenses/receipt-wrangler-railway/
 COPY --chmod=0755 scripts/entrypoint.sh /usr/local/bin/receipt-wrangler-railway-entrypoint
 COPY --chmod=0755 scripts/bootstrap-admin.sh /usr/local/bin/receipt-wrangler-railway-bootstrap
