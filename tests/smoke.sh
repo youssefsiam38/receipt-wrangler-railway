@@ -26,7 +26,8 @@ assert_contains "signed in with upstream default" "signed in with upstream's def
 assert_contains "bootstrap complete" "admin bootstrap complete" "$logs"
 assert_contains "public start" "starting Receipt Wrangler: API on 8081, nginx on" "$logs"
 assert_contains "nginx logs to stderr" "nginx/1" "$logs"
-assert_contains "one server block, dual stack" "listeners:  80   [::]:80" "$logs"
+assert_contains "exactly one nginx server block" "1 server block(s)" "$logs"
+assert_contains "nginx listens on IPv6 too" "\[::\]:80" "$logs"
 
 section "nginx serves the application, not a packaged default page"
 body=$(curl -s --max-time 30 "$BASE_URL/")
