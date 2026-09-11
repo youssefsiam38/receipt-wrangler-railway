@@ -24,7 +24,8 @@ logs=$(compose logs --no-color receipt-wrangler)
 assert_contains "pre-start phase (nginx down)" "launching the API alone (nginx stays down)" "$logs"
 assert_contains "signed in with upstream default" "signed in with upstream's default bootstrap credentials" "$logs"
 assert_contains "bootstrap complete" "admin bootstrap complete" "$logs"
-assert_contains "public start" "starting Receipt Wrangler (API + nginx) on port 80" "$logs"
+assert_contains "public start" "starting Receipt Wrangler: API on 8081, nginx on" "$logs"
+assert_contains "nginx logs to stderr" "nginx/1" "$logs"
 for sec in "$LOCAL_ENCRYPTION_KEY" "$LOCAL_SECRET_KEY" "$LOCAL_ADMIN_PASSWORD" "$LOCAL_DB_PASSWORD"; do
   assert_not_contains "secret not in logs (len ${#sec})" "$sec" "$logs"
 done
