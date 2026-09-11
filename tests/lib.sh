@@ -63,8 +63,27 @@ make_receipt_png() { python3 "$REPO_ROOT/tests/fixtures/make-receipt.py" "$1" >/
 upload_receipt_image() {
   api "$1" -X POST "$BASE_URL/api/receiptImage" -F "receiptId=$3" -F "file=@$2;type=image/png" | jq -r '.id // empty'
 }
+# api_json JAR URL [TIMEOUT] -> body, retried while the API returns something that is not JSON
+# (nginx 502/504 while the API is still coming up, or a rate-limit page). Dies with the raw body.
+api_json() {
+  local jar=$1 url=$2 timeout=${3:-60} start body
+  start=$(date +%s)
+  while :; do
+    body=$(api "$jar" "$url" || true)
+    if jq -e . >/dev/null 2>&1 <<<"$body"; then printf '%s' "$body"; return 0; fi
+    if [ $(( $(date +%s) - start )) -ge "$timeout" ]; then
+      printf 'non-JSON response from %s after %ss: %s\n' "$url" "$timeout" "$(head -c 200 <<<"$body")" >&2
+      return 1
+    fi
+    sleep 3
+  done
+}
 # default_group JAR -> id of the user's first group
-default_group() { api "$1" "$BASE_URL/api/group" | jq -r '(if type=="array" then . else (.data // []) end)[0].id'; }
+default_group() {
+  local body
+  body=$(api_json "$1" "$BASE_URL/api/group") || return 1
+  jq -r '(if type=="array" then . else (.data // []) end)[0].id // empty' <<<"$body"
+}
 compose() { docker compose -f "$REPO_ROOT/compose.yaml" "$@"; }
 
 # create_receipt JAR GROUP NAME AMOUNT -> prints receipt id
@@ -96,4 +115,4 @@ categorize() {
   }')
   api_code "$jar" -X PUT "$BASE_URL/api/receipt/$rid" -H 'Content-Type: application/json' --data "$payload"
 }
-receipt_json() { api "$1" "$BASE_URL/api/receipt/$2"; }
+receipt_json() { api_json "$1" "$BASE_URL/api/receipt/$2"; }
