@@ -59,48 +59,56 @@ api_code() { local jar=$1; shift; curl -s -o /dev/null -w '%{http_code}' -b "$ja
 
 make_receipt_png() { python3 "$REPO_ROOT/tests/fixtures/make-receipt.py" "$1" >/dev/null; }
 
-# upload_receipt_image JAR FILE RECEIPTID -> prints the created receipt image id
-upload_receipt_image() {
-  api "$1" -X POST "$BASE_URL/api/receiptImage" -F "receiptId=$3" -F "file=@$2;type=image/png" | jq -r '.id // empty'
-}
-# api_json JAR URL [TIMEOUT] -> body, retried while the API returns something that is not JSON
-# (nginx 502/504 while the API is still coming up, or a rate-limit page). Dies with the raw body.
-api_json() {
-  local jar=$1 url=$2 timeout=${3:-60} start body
+# req_json JAR TIMEOUT curl-args... -> response body, retried while the API returns something that
+# is not JSON (nginx 502/504 while the API is still coming up, or a rate-limit page). On timeout it
+# prints the status and the first bytes of the body to stderr and fails, so CI shows the real cause.
+req_json() {
+  local jar=$1 timeout=$2; shift 2
+  local start body code
   start=$(date +%s)
   while :; do
-    body=$(api "$jar" "$url" || true)
+    body=$(curl -s -b "$jar" -w '\n%{http_code}' --max-time 60 "$@" || true)
+    code=${body##*$'\n'}; body=${body%$'\n'*}
     if jq -e . >/dev/null 2>&1 <<<"$body"; then printf '%s' "$body"; return 0; fi
     if [ $(( $(date +%s) - start )) -ge "$timeout" ]; then
-      printf 'non-JSON response from %s after %ss: %s\n' "$url" "$timeout" "$(head -c 200 <<<"$body")" >&2
+      printf 'non-JSON response after %ss (HTTP %s) from: %s\n  body: %s\n' \
+        "$timeout" "$code" "$*" "$(head -c 200 <<<"$body")" >&2
       return 1
     fi
     sleep 3
   done
 }
+api_json() { local jar=$1 url=$2 timeout=${3:-90}; req_json "$jar" "$timeout" "$url"; }
 # default_group JAR -> id of the user's first group
 default_group() {
   local body
   body=$(api_json "$1" "$BASE_URL/api/group") || return 1
   jq -r '(if type=="array" then . else (.data // []) end)[0].id // empty' <<<"$body"
 }
-compose() { docker compose -f "$REPO_ROOT/compose.yaml" "$@"; }
-
 # create_receipt JAR GROUP NAME AMOUNT -> prints receipt id
 create_receipt() {
-  api "$1" -X POST "$BASE_URL/api/receipt" -H 'Content-Type: application/json' \
+  local body
+  body=$(req_json "$1" 90 -X POST "$BASE_URL/api/receipt" -H 'Content-Type: application/json' \
     --data "$(jq -nc --argjson g "$2" --arg n "$3" --arg a "$4" \
       '{name:$n, amount:$a, date:"2026-01-15T00:00:00Z", groupId:$g, paidByUserId:1, status:"OPEN",
         categories:[], tags:[], comments:[], customFields:[],
         receiptItems:[{name:"Coffee", chargedToUserId:1, amount:"4.50", status:"OPEN"},
                       {name:"Bagel",  chargedToUserId:1, amount:"3.25", status:"OPEN"},
-                      {name:"Juice",  chargedToUserId:1, amount:"4.75", status:"OPEN"}]}')" \
-    | jq -r '.id // empty'
+                      {name:"Juice",  chargedToUserId:1, amount:"4.75", status:"OPEN"}]}')") || return 1
+  jq -r '.id // empty' <<<"$body"
 }
 # create_category JAR NAME -> prints category id
 create_category() {
-  api "$1" -X POST "$BASE_URL/api/category" -H 'Content-Type: application/json' \
-    --data "$(jq -nc --arg n "$2" '{name:$n, description:"synthetic test category"}')" | jq -r '.id // empty'
+  local body
+  body=$(req_json "$1" 90 -X POST "$BASE_URL/api/category" -H 'Content-Type: application/json' \
+    --data "$(jq -nc --arg n "$2" '{name:$n, description:"synthetic test category"}')") || return 1
+  jq -r '.id // empty' <<<"$body"
+}
+# upload_receipt_image JAR FILE RECEIPTID -> prints the created receipt image id
+upload_receipt_image() {
+  local body
+  body=$(req_json "$1" 120 -X POST "$BASE_URL/api/receiptImage" -F "receiptId=$3" -F "file=@$2;type=image/png") || return 1
+  jq -r '.id // empty' <<<"$body"
 }
 # categorize JAR RECEIPT CATEGORY_ID CATEGORY_NAME -> HTTP code of the update.
 # The update endpoint validates the whole receipt, and every line item must carry its receiptId,
@@ -116,3 +124,5 @@ categorize() {
   api_code "$jar" -X PUT "$BASE_URL/api/receipt/$rid" -H 'Content-Type: application/json' --data "$payload"
 }
 receipt_json() { api_json "$1" "$BASE_URL/api/receipt/$2"; }
+compose() { docker compose -f "$REPO_ROOT/compose.yaml" "$@"; }
+
