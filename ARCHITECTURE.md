@@ -71,6 +71,19 @@ That last row matters: changing your password in the app is the behaviour we wan
 make the container refuse to boot or silently revert your choice. The only condition that aborts
 startup is the default account still being usable after a reset attempt.
 
+### nginx: one server block, both address families
+
+Upstream's `docker/default.conf` has `listen 80;`, which binds IPv4 only. A first Railway staging
+deploy reached the container but was answered by Debian's packaged nginx welcome page on port 80,
+not by the application, and every `/api/*` path returned nginx's own 404 — so the healthcheck
+passed against the API while real traffic hit the wrong server. The wrapper therefore, at build
+time, adds `listen [::]:80;` to **upstream's own server block** (rather than shipping a second
+block, which would duplicate their locations, rate limits and body limits and drift from them) and
+deletes Debian's default site and its welcome page so nothing else can answer on port 80. The build
+fails if the patch does not apply, and the entrypoint logs the number of server blocks and their
+listeners at every start, so a wrong config is visible in the platform's logs instead of silently
+serving the wrong page.
+
 ## Health check
 
 Railway healthcheck path: `/api/featureConfig`, timeout 600 s (the image is ~8.2 GB, so the first

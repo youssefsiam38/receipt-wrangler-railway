@@ -26,6 +26,16 @@ assert_contains "signed in with upstream default" "signed in with upstream's def
 assert_contains "bootstrap complete" "admin bootstrap complete" "$logs"
 assert_contains "public start" "starting Receipt Wrangler: API on 8081, nginx on" "$logs"
 assert_contains "nginx logs to stderr" "nginx/1" "$logs"
+assert_contains "one server block, dual stack" "listeners:  80   [::]:80" "$logs"
+
+section "nginx serves the application, not a packaged default page"
+body=$(curl -s --max-time 30 "$BASE_URL/")
+assert_contains "root serves the Receipt Wrangler app" "Receipt Wrangler" "$body"
+assert_not_contains "not the Debian nginx welcome page" "Welcome to nginx" "$body"
+assert_eq "SPA fallback for unknown paths" "200" "$(http_code "$BASE_URL/some/deep/app/route")"
+asset=$(compose exec -T receipt-wrangler bash -c 'ls /usr/share/nginx/html/*.js 2>/dev/null | head -1 | xargs -r basename' | tr -d '\r')
+[ -n "$asset" ] && assert_eq "built asset is served" "200" "$(http_code "$BASE_URL/$asset")" || fail "no built asset found in the image"
+assert_eq "Debian welcome page removed from the image" "1" "$(compose exec -T receipt-wrangler bash -c 'test -e /var/www/html/index.nginx-debian.html && echo 0 || echo 1' | tr -d '\r')"
 for sec in "$LOCAL_ENCRYPTION_KEY" "$LOCAL_SECRET_KEY" "$LOCAL_ADMIN_PASSWORD" "$LOCAL_DB_PASSWORD"; do
   assert_not_contains "secret not in logs (len ${#sec})" "$sec" "$logs"
 done

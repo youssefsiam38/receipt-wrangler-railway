@@ -17,7 +17,9 @@ assert_contains "valid certificate" "SSL certificate verify ok" "$(curl -sv -o /
 assert_contains "http -> https" "https://$host" "$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' --max-time 20 "http://$host/")"
 
 section "readiness and first-run safety"
-assert_contains "web app served" "<app-root" "$(curl -s "$BASE_URL/")"
+body=$(curl -s --max-time 30 "$BASE_URL/")
+assert_contains "web app served" "Receipt Wrangler" "$body"
+assert_not_contains "not a packaged default page" "Welcome to nginx" "$body"
 assert_eq "healthcheck path (API through nginx)" "200" "$(http_code "$BASE_URL/api/featureConfig")"
 assert_eq "local signup disabled" "false" "$(curl -s "$BASE_URL/api/featureConfig" | jq -r '.enableLocalSignUp')"
 code=$(login_code admin admin)

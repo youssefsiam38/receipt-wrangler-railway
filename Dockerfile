@@ -19,10 +19,14 @@ ARG BUILD_DATE=1970-01-01T00:00:00Z
 RUN apt-get update && apt-get install -y --no-install-recommends jq \
     && rm -rf /var/lib/apt/lists/*
 
-# Upstream's server block listens on IPv4 only; add an IPv6 listener for platforms that reach
-# containers over IPv6. Both listeners proxy to the same API on localhost:8081.
-COPY scripts/nginx-dual-stack.conf /etc/nginx/conf.d/zz-dual-stack.conf
-RUN nginx -t
+# Upstream's server block listens on IPv4 only (`listen 80;`). Platforms that reach containers over
+# IPv6 cannot connect to that socket, so add an IPv6 listener to the *same* block rather than
+# duplicating it: one server keeps upstream's locations, rate limits and body limits authoritative.
+# Debian's packaged default site and its welcome page are removed so nothing else can answer on 80.
+RUN sed -i -E 's|^(\s*)listen 80;|\1listen 80;\n\1listen [::]:80;|' /etc/nginx/conf.d/default.conf \
+    && rm -rf /etc/nginx/sites-enabled/* /etc/nginx/sites-available/* /var/www/html/index.nginx-debian.html \
+    && grep -q 'listen \[::\]:80;' /etc/nginx/conf.d/default.conf \
+    && nginx -t
 
 COPY licenses/ /usr/share/licenses/receipt-wrangler-railway/
 COPY --chmod=0755 scripts/entrypoint.sh /usr/local/bin/receipt-wrangler-railway-entrypoint

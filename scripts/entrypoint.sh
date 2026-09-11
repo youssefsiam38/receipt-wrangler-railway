@@ -70,6 +70,9 @@ fi
 # /var/log/nginx/error.log inside the container, where a hosting platform never sees them. We start
 # the same two processes here with nginx logging to stderr, so a failure to bind or start is visible
 # in the platform's logs, and keep the same "exit when either child exits" behaviour.
+# One line of evidence about what nginx will actually serve; platforms only show stdout/stderr,
+# and a wrong server block is otherwise invisible until someone hits the wrong page.
+log "nginx config: $(nginx -T 2>/dev/null | grep -cE '^\s*server \{') server block(s), listeners:$(nginx -T 2>/dev/null | grep -oE '^\s*listen [^;]+' | sed 's/^ *listen /  /' | tr '\n' ' ')"
 log "starting Receipt Wrangler: API on 8081, nginx on ${PORT:-80}"
 ./api --env prod &
 api_pid=$!
