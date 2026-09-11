@@ -152,6 +152,9 @@ and volume size. Using a cloud AI provider moves extraction cost off Railway and
 - The ~8.2 GB image makes deploys and redeploys slow.
 - OCR is CPU-bound; large PDFs use Chromium and ImageMagick inside the container.
 - Railway healthchecks run at deploy time only.
+- On a small instance the API can return 502 for a few seconds right after an upload, while the
+  OCR job it queued competes for CPU. Give the service more CPU, or use a cloud AI provider, if
+  you upload many receipts at once.
 - `linux/arm64` is published upstream but only `amd64` is tested here.
 - The generated administrator password stays in a Railway variable until you change it in the app.
 

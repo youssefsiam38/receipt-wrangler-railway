@@ -66,7 +66,9 @@ assert_contains "image written to the data volume" "receipt.png" "$files"
 section "readiness signal"
 # nginx serves the built Angular app from disk as soon as it starts, so "/" can answer 200 while
 # the Go API behind it is still migrating. The Railway healthcheck therefore targets the API.
-assert_eq "healthcheck path is API-backed" "200" "$(http_code "$BASE_URL/api/featureConfig")"
+# Bounded, not instantaneous: right after an upload the API is busy with the OCR job it just
+# queued, and on a small machine nginx can return 502 for a few seconds while it catches up.
+api_ready 120 && pass "healthcheck path is API-backed" || fail "healthcheck path never returned 200"
 assert_contains "healthcheck path documented in the template" "/api/featureConfig" "$(cat "$REPO_ROOT/RAILWAY_TEMPLATE.md" 2>/dev/null || echo /api/featureConfig)"
 
 section "graceful shutdown (SIGTERM)"

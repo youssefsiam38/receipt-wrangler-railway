@@ -75,5 +75,6 @@ start. The service runs a single replica with a volume, so redeploys have a few 
 
 Resource expectations: roughly 60 MiB of memory for the app container at idle, more while OCR runs;
 the database and Redis are small; receipt images grow the volume. Limitations: single replica;
-about 8.2 GB image; OCR is CPU-bound; the generated administrator password sits in a Railway
-variable until you change it in the app.
+about 8.2 GB image; OCR is CPU-bound and can make the app briefly unresponsive on a small instance
+while a receipt is processed; the generated administrator password sits in a Railway variable until
+you change it in the app.
