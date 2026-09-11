@@ -70,6 +70,22 @@ fi
 # /var/log/nginx/error.log inside the container, where a hosting platform never sees them. We start
 # the same two processes here with nginx logging to stderr, so a failure to bind or start is visible
 # in the platform's logs, and keep the same "exit when either child exits" behaviour.
+# Debian's nginx package ships a default site that claims `default_server` on both address
+# families and serves /var/www/html. The image removes it at build time, but a Railway deployment
+# was observed loading it anyway - so it is removed again here, at every start, before nginx runs.
+# Without this, that block wins the default-server election and answers every request with the
+# packaged welcome page while the application's own block is never reached.
+removed=0
+for f in /etc/nginx/sites-enabled/* /etc/nginx/sites-available/*; do
+  [ -e "$f" ] || continue
+  rm -f "$f" && removed=$((removed + 1))
+done
+rm -f /var/www/html/index.nginx-debian.html
+[ "$removed" -gt 0 ] && log "removed $removed packaged nginx site file(s) that would have shadowed the application"
+
+blocks=$(nginx -T 2>/dev/null | grep -cE '^\s*server \{' || echo 0)
+[ "$blocks" = 1 ] || fail "expected exactly one nginx server block, found $blocks. Another config is claiming port 80; the application would not be served."
+
 # One line of evidence about what nginx will actually serve; platforms only show stdout/stderr,
 # and a wrong server block is otherwise invisible until someone hits the wrong page.
 log "nginx config: $(nginx -T 2>/dev/null | grep -cE '^\s*server \{') server block(s), listeners:$(nginx -T 2>/dev/null | grep -oE '^\s*listen [^;]+' | sed 's/^ *listen /  /' | tr '\n' ' ')"

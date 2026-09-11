@@ -84,6 +84,13 @@ fails if the patch does not apply, and the entrypoint logs the number of server 
 listeners at every start, so a wrong config is visible in the platform's logs instead of silently
 serving the wrong page.
 
+That diagnostic then showed the packaged site coming back: on Railway the container loaded **two**
+server blocks, the second one Debian's default claiming `default_server` on both families, even
+though the same image has only one block when inspected locally. The entrypoint therefore removes
+`/etc/nginx/sites-enabled/*`, `/etc/nginx/sites-available/*` and the packaged welcome page again at
+every start, and refuses to start at all if more than one server block remains — a wrong page is a
+silent failure, an exited container is not.
+
 ## Health check
 
 Railway healthcheck path: `/api/featureConfig`, timeout 600 s (the image is ~8.2 GB, so the first

@@ -27,6 +27,12 @@ assert_contains "bootstrap complete" "admin bootstrap complete" "$logs"
 assert_contains "public start" "starting Receipt Wrangler: API on 8081, nginx on" "$logs"
 assert_contains "nginx logs to stderr" "nginx/1" "$logs"
 assert_contains "exactly one nginx server block" "1 server block(s)" "$logs"
+# the entrypoint refuses to start if another config claims port 80
+if docker run --rm --entrypoint bash "$(compose config --images | grep -viE 'postgres|redis' | head -1)" -c 'mkdir -p /etc/nginx/sites-enabled && printf "server { listen 8080; }\n" > /etc/nginx/sites-enabled/zz-extra.conf && exec /usr/local/bin/receipt-wrangler-railway-entrypoint' >"$TEST_TMP/extra.log" 2>&1; then
+  fail "should refuse to start with an extra server block"
+else
+  pass "refuses to start when another nginx server block exists"
+fi
 assert_contains "nginx listens on IPv6 too" "\[::\]:80" "$logs"
 
 section "nginx serves the application, not a packaged default page"
