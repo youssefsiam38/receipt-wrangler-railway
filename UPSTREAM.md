@@ -42,7 +42,8 @@ obligation for your changes too.
 
 | Wrapper tag | Index digest | Notes |
 |---|---|---|
-| `ghcr.io/youssefsiam38/receipt-wrangler-railway:1.0.5` | `sha256:8aa4dfed66d2566aaa05b1ab06bc135ae5c030b66b8e3c5aa0a3a5edba649153` | current; amd64 `sha256:e684a94ec60418ef0c50f9532385fd9b6217cafd78e6943a1a8c7eb7ea14fd1f`, arm64 `sha256:428edadd238e518d5ae18ac186def2f56a6fe80f982400a4f91600f03f28bf91` |
+| `ghcr.io/youssefsiam38/receipt-wrangler-railway:1.0.5` | `sha256:8aa4dfed66d2566aaa05b1ab06bc135ae5c030b66b8e3c5aa0a3a5edba649153` | superseded; amd64 `sha256:e684a94ec60418ef0c50f9532385fd9b6217cafd78e6943a1a8c7eb7ea14fd1f`, arm64 `sha256:428edadd238e518d5ae18ac186def2f56a6fe80f982400a4f91600f03f28bf91` |
+| `ghcr.io/youssefsiam38/receipt-wrangler-railway:1.0.6` | `sha256:5a0afb38e296b5f3f9412df4cdc5e506ad336e7c51c3cec5fa885b280b07a636` | current; logs routine start-up lines on stdout, tag commit `45477393351e56d0d4c2d3f0f01a99ba86b61a47` |
 | 1.0.0, 1.0.2 | not published | publish workflow failed on flaky test reads before any image was pushed; tags kept, never reused |
 | 1.0.1, 1.0.3, 1.0.4 | published, superseded | see releases |
 

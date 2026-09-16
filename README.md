@@ -31,7 +31,7 @@ Template page: https://railway.com/deploy/receipt-wrangler
 | Component | Version |
 |---|---|
 | Receipt Wrangler | v7.1.0 |
-| Wrapper | v1.0.5 — `ghcr.io/youssefsiam38/receipt-wrangler-railway:1.0.5` ([releases](https://github.com/youssefsiam38/receipt-wrangler-railway/releases)) |
+| Wrapper | v1.0.6 — `ghcr.io/youssefsiam38/receipt-wrangler-railway:1.0.6`, index digest `sha256:5a0afb38e296b5f3f9412df4cdc5e506ad336e7c51c3cec5fa885b280b07a636` ([releases](https://github.com/youssefsiam38/receipt-wrangler-railway/releases)) |
 
 Why a wrapper and why these three services: [ARCHITECTURE.md](ARCHITECTURE.md). In one sentence:
 Receipt Wrangler creates a default `admin`/`admin` account on first start, and the wrapper replaces
