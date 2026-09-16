@@ -61,7 +61,7 @@ services:
       RW_ADMIN_PASSWORD: local-test-only-admin-password
       APP_READY_TIMEOUT: ${APP_READY_TIMEOUT:-300}
     ports:
-      - '127.0.0.1:9082:80'
+      - '127.0.0.1:${RECEIPT_WRANGLER_TEST_PORT:-9082}:80'
     volumes:
       - data:/app/receipt-wrangler-api/data
 

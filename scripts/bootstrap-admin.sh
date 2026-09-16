@@ -10,8 +10,10 @@
 #                                                    that the default credentials are not usable
 set -u
 
-log()  { printf '[receipt-wrangler-railway] %s\n' "$*" >&2; }
-fail() { log "FATAL: $*"; exit 1; }
+# Railway colours a log line by the stream it arrived on, so routine start-up messages go to stdout
+# and only failures go to stderr; otherwise the whole first boot is shown to the deployer in red.
+log()  { printf '[receipt-wrangler-railway] %s\n' "$*"; }
+fail() { printf '[receipt-wrangler-railway] FATAL: %s\n' "$*" >&2; exit 1; }
 
 API=http://127.0.0.1:8081
 USERNAME=${RW_ADMIN_USERNAME:-admin}
